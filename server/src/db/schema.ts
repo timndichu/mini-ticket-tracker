@@ -20,9 +20,11 @@ export const ticketPriorityEnum = pgEnum("ticket_priority", [
   "high",
 ]);
 
+// Define the tickets table
 export const tickets = pgTable(
   "tickets",
   {
+    //define a PostgreSQL auto-incrementing id column as the primary key for the tickets table
     id: serial("id").primaryKey(),
 
     title: varchar("title", { length: 200 }).notNull(),
@@ -43,15 +45,22 @@ export const tickets = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    index("idx_tickets_created_at").on(
-      table.createdAt,
-      table.id,
-    ),
-    index("idx_tickets_status_created_at").on(
-      table.status,
-      table.createdAt,
-      table.id,
-    ),
-  ],
+ 
+(table) => [
+  // Supports sorting tickets by creation time and ID,
+  // including paginated queries without a status filter.
+  index("idx_tickets_created_at").on(
+    table.createdAt,
+    table.id,
+  ),
+
+  // Supports filtering tickets by status and then
+  // sorting the results by creation time and ID.
+  index("idx_tickets_status_created_at").on(
+    table.status,
+    table.createdAt,
+    table.id,
+  ),
+],
+
 );
