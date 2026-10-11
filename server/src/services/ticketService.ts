@@ -1,7 +1,7 @@
 
 import { db } from "../db/index.js";
 import { tickets } from "../db/schema.js";
-import type { CreateTicketInput } from "../schemas/ticketSchema.js";
+import type { CreateTicketInput, UpdateTicketInput } from "../schemas/ticketSchema.js";
 import { count, desc, eq } from "drizzle-orm";
 import type { ListTicketsQuery } from "../schemas/ticketSchema.js";
 
@@ -88,4 +88,19 @@ export async function getTicketStats() {
   }
 
   return stats;
+}
+
+
+// Function to update a ticket by ID
+export async function updateTicket(
+  id: number,
+  input: UpdateTicketInput
+) {
+  const [updatedTicket] = await db
+    .update(tickets)
+    .set(input)
+    .where(eq(tickets.id, id))
+    .returning();
+
+  return updatedTicket ?? null;
 }
