@@ -22,7 +22,7 @@ after(async () => {
   await pool.end();
 });
 
-//// /// POST ENDPOINT TESTS //////////
+//// /// POST /tickets ENDPOINT TESTS //////////
 
 test("POST /tickets creates a ticket successfully", async () => {
   const response = await request(app)
@@ -89,7 +89,9 @@ test("POST /tickets only contains title", async () => {
   createdTicketIds.push(response.body.id);
 });
 
-///////// GET ENDPOINT TESTS WITH PAGINATION AND FILTERING //////////
+////////////////////////////////////////////////////////////////////////////////////
+
+///////// GET /tickets ENDPOINT TESTS WITH PAGINATION AND FILTERING //////////
 async function createTestTicket(
   title: string,
   status: "open" | "in_progress" | "closed" = "open"
@@ -228,9 +230,9 @@ test("GET /tickets rejects invalid pagination parameters", async (t) => {
   }
 });
 
+////////////////////////////////////////////////////////////////////////////////////
 
-
-// GET /tickets/stats returns counts grouped by status
+// GET /tickets/stats TESTS : returns counts grouped by status
 test("GET /tickets/stats returns counts grouped by status", async () => {
   const beforeResponse = await request(app).get("/tickets/stats");
 
@@ -256,4 +258,113 @@ test("GET /tickets/stats returns counts grouped by status", async () => {
   assert.equal(response.body.open, before.open + 1);
   assert.equal(response.body.in_progress, before.in_progress + 1);
   assert.equal(response.body.closed, before.closed + 1);
+});
+
+////////////////////////////////////////////////////////////////////////////////////
+
+/////////// PATCH ENDPOINT TESTS //////////
+test("PATCH /tickets/:id updates a ticket's status", async () => {
+  const ticket = await createTestTicket(
+    "PATCH status test",
+    "open"
+  );
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({ status: "in_progress" });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.id, ticket.id);
+  assert.equal(response.body.status, "in_progress");
+  assert.equal(response.body.priority, "medium");
+});
+
+test("PATCH /tickets/:id updates priority", async () => {
+  const ticket = await createTestTicket(
+    "PATCH priority test",
+    "open"
+  );
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({ priority: "high" });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.id, ticket.id);
+  assert.equal(response.body.priority, "high");
+
+  // Updating priority should not change status.
+  assert.equal(response.body.status, "open");
+});
+
+test("PATCH /tickets/:id updates status and priority together", async () => {
+  const ticket = await createTestTicket(
+    "PATCH combined update test",
+    "open"
+  );
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({
+      status: "closed",
+      priority: "high",
+    });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.status, "closed");
+  assert.equal(response.body.priority, "high");
+});
+
+test("PATCH /tickets/:id rejects an invalid status", async () => {
+  const ticket = await createTestTicket("PATCH invalid status test");
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({ status: "pending" });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "Validation failed");
+});
+
+test("PATCH /tickets/:id rejects an empty body", async () => {
+  const ticket = await createTestTicket("PATCH empty body test");
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({});
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "Validation failed");
+});
+
+test("PATCH /tickets/:id returns 404 for a nonexistent ticket", async () => {
+  const response = await request(app)
+    .patch("/tickets/999999999")
+    .send({ status: "closed" });
+
+  assert.equal(response.status, 404);
+  assert.equal(response.body.error, "Ticket not found");
+});
+
+test("PATCH /tickets/:id rejects an invalid ticket ID", async () => {
+  const response = await request(app)
+    .patch("/tickets/abc")
+    .send({ status: "closed" });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "Invalid ticket ID");
+});
+
+test("PATCH /tickets/:id rejects unsupported fields", async () => {
+  const ticket = await createTestTicket("PATCH unsupported field test");
+
+  const response = await request(app)
+    .patch(`/tickets/${ticket.id}`)
+    .send({
+      status: "closed",
+      title: "Unexpected title change",
+    });
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "Validation failed");
 });
