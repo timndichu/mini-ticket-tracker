@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import type { CreateTicketInput } from "../schemas/ticketSchema.js";
-import { createTicket } from "../services/ticketService.js";
+import { createTicket, getTicketStats } from "../services/ticketService.js";
 import { listTicketsQuerySchema } from "../schemas/ticketSchema.js";
 import { listTickets } from "../services/ticketService.js";
 
@@ -38,6 +38,21 @@ export const listTicketsController: RequestHandler = async (req, res, next) => {
     const ticketsResult = await listTickets(result.data);
 
     res.status(200).json(ticketsResult);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+export const getTicketStatsController: RequestHandler = async (
+  _req,
+  res,
+  next
+) => {
+  try {
+    const stats = await getTicketStats();
+    res.status(200).json(stats);
   } catch (error) {
     next(error);
   }

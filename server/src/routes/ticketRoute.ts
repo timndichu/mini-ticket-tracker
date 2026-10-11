@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { createTicketController, listTicketsController } from "../controllers/ticketController.js";
+import { createTicketController, getTicketStatsController, listTicketsController } from "../controllers/ticketController.js";
 import { validateBody } from "../middleware/validate.js";
 import { createTicketSchema } from "../schemas/ticketSchema.js";
 
@@ -14,5 +14,7 @@ router.post(
 );
 
 router.get("/", listTicketsController);
+
+router.get("/stats", getTicketStatsController);
 
 export default router;
