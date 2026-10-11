@@ -227,3 +227,33 @@ test("GET /tickets rejects invalid pagination parameters", async (t) => {
     });
   }
 });
+
+
+
+// GET /tickets/stats returns counts grouped by status
+test("GET /tickets/stats returns counts grouped by status", async () => {
+  const beforeResponse = await request(app).get("/tickets/stats");
+
+  assert.equal(beforeResponse.status, 200);
+
+  const before = beforeResponse.body as {
+    open: number;
+    in_progress: number;
+    closed: number;
+  };
+
+  await createTestTicket("Stats test open", "open");
+  await createTestTicket("Stats test in progress", "in_progress");
+  await createTestTicket("Stats test closed", "closed");
+
+  const response = await request(app).get("/tickets/stats");
+
+  assert.equal(response.status, 200);
+  assert.equal(typeof response.body.open, "number");
+  assert.equal(typeof response.body.in_progress, "number");
+  assert.equal(typeof response.body.closed, "number");
+
+  assert.equal(response.body.open, before.open + 1);
+  assert.equal(response.body.in_progress, before.in_progress + 1);
+  assert.equal(response.body.closed, before.closed + 1);
+});
