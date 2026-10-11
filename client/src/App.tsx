@@ -6,6 +6,7 @@ import TicketTable from "./components/dashboard/TicketTable";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import TicketFilters from "./components/dashboard/TicketFilters";
 import Pagination from "./components/dashboard/Pagination";
+import CreateTicketForm from "./components/dashboard/CreateTicketForm";
 
 type StatusFilter = "all" | TicketStatus;
 
@@ -16,7 +17,6 @@ const statusLabels: Record<TicketStatus, string> = {
   in_progress: "In Progress",
   closed: "Closed",
 };
-
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -34,6 +34,8 @@ function App() {
   const [statsError, setStatsError] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +109,12 @@ function App() {
     setRefreshKey((current) => current + 1);
   }
 
+  function handleTicketCreated() {
+    setStatusFilter("all");
+    setPage(1);
+    refreshDashboard();
+  }
+
   function handleFilterChange(value: StatusFilter) {
     setStatusFilter(value);
     setPage(1);
@@ -141,6 +149,33 @@ function App() {
             Refresh
           </button>
         </section>
+
+        <div className="mb-8">
+          <div className="mb-8 flex justify-end">
+            {!isCreateFormOpen && (
+              <button
+                type="button"
+                onClick={() => setIsCreateFormOpen(true)}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                <span aria-hidden="true">+</span>
+                Create ticket
+              </button>
+            )}
+          </div>
+
+          {isCreateFormOpen && (
+            <div className="mb-8">
+              <CreateTicketForm
+                onCreated={() => {
+                  setIsCreateFormOpen(false);
+                  handleTicketCreated();
+                }}
+                onCancel={() => setIsCreateFormOpen(false)}
+              />
+            </div>
+          )}
+        </div>
 
         <div className="mb-8">
           <TicketStatsSection stats={stats} loading={loadingStats} />
