@@ -4,6 +4,7 @@ import type { Ticket, TicketStats, TicketStatus } from "./types/ticket";
 import TicketStatsSection from "./components/dashboard/TicketStatsSection";
 import StatusBadge from "./components/ui/StatusBadge";
 import PriorityBadge from "./components/ui/PriorityBadge";
+import TicketTable from "./components/dashboard/TicketTable";
 
 type StatusFilter = "all" | TicketStatus;
 
@@ -283,95 +284,7 @@ function App() {
             </div>
           )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-190 text-left">
-              <thead className="bg-slate-50">
-                <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th scope="col" className="px-6 py-4">
-                    Ticket
-                  </th>
-                  <th scope="col" className="px-6 py-4">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-4">
-                    Priority
-                  </th>
-                  <th scope="col" className="px-6 py-4">
-                    Created
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {loadingTickets ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-16 text-center text-sm text-slate-500"
-                    >
-                      Loading tickets...
-                    </td>
-                  </tr>
-                ) : ticketsError ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-16 text-center text-sm text-slate-500"
-                    >
-                      Tickets could not be displayed.
-                    </td>
-                  </tr>
-                ) : tickets.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-16 text-center">
-                      <div className="mx-auto flex max-w-sm flex-col items-center">
-                        <span className="mb-3 grid size-12 place-items-center rounded-xl bg-slate-100 text-xl text-slate-500">
-                          ▤
-                        </span>
-                        <p className="font-semibold text-slate-800">
-                          No tickets found
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Try another status filter or create a ticket.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  tickets.map((ticket: Ticket) => (
-                    <tr
-                      key={ticket.id}
-                      className="transition hover:bg-slate-50/80"
-                    >
-                      <td className="max-w-md px-6 py-5">
-                        <p className="break-word text-sm font-semibold text-slate-800">
-                          {ticket.title}
-                        </p>
-                        <p className="mt-1 break-word text-xs leading-5 text-slate-500">
-                          {ticket.description || "No description provided"}
-                        </p>
-                        <p className="mt-2 text-xs font-medium text-slate-400">
-                          TKT-{ticket.id}
-                        </p>
-                      </td>
-
-                      <td className="px-6 py-5">
-                       <StatusBadge status={ticket.status} />
-                      </td>
-
-                      <td className="px-6 py-5">
-                       <PriorityBadge priority={ticket.priority} />
-                      </td>
-
-                      <td className="whitespace-nowrap px-6 py-5 text-sm text-slate-500">
-                        {formatDate(ticket.createdAt)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <TicketTable tickets={tickets} loading={loadingTickets} />
 
           <footer className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="text-sm text-slate-500">
