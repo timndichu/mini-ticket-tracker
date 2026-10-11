@@ -25,11 +25,24 @@ export const listTicketsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
-export type ListTicketsQuery = z.infer<
-  typeof listTicketsQuerySchema
->;
+
+export const updateTicketSchema = z.object({
+  status: z.enum(["open", "in_progress", "closed"]).optional(),
+  priority: z.enum(["low", "medium", "high"]).optional(),
+}).strict().refine(
+  (data) => data.status !== undefined || data.priority !== undefined,
+  {
+    message: "At least one field (status or priority) must be provided",
+  }
+);
 
 
 export type CreateTicketInput = z.infer<
   typeof createTicketSchema
 >;
+
+export type ListTicketsQuery = z.infer<
+  typeof listTicketsQuerySchema
+>;
+
+export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
