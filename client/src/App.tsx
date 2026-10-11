@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getTickets, getTicketStats } from "./services/ticketApi";
-import type { Ticket, TicketStats, TicketStatus } from "./types/ticket";
+import { getTickets, getTicketStats, updateTicket } from "./services/ticketApi";
+import type { Ticket, TicketStats, TicketStatus, UpdateTicketInput } from "./types/ticket";
 import TicketStatsSection from "./components/dashboard/TicketStatsSection";
 import TicketTable from "./components/dashboard/TicketTable";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
@@ -36,6 +36,12 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+
+  const [updatingTicketId, setUpdatingTicketId] = useState<number | null>(null);
+
+  const [statusUpdateError, setStatusUpdateError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +125,29 @@ function App() {
     setStatusFilter(value);
     setPage(1);
   }
+
+  async function handleTicketUpdate(
+  ticketId: number,
+  changes: UpdateTicketInput
+): Promise<void> {
+  setUpdatingTicketId(ticketId);
+  setStatusUpdateError(null);
+
+  try {
+    await updateTicket(ticketId, changes);
+    refreshDashboard();
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : "Failed to update ticket.";
+
+    setStatusUpdateError(message);
+    throw new Error(message);
+  } finally {
+    setUpdatingTicketId(null);
+  }
+}
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -233,7 +262,18 @@ function App() {
             </div>
           )}
 
-          <TicketTable tickets={tickets} loading={loadingTickets} />
+          {statusUpdateError && (
+            <p role="alert" className="px-5 py-3 text-sm text-red-600 sm:px-6">
+              {statusUpdateError}
+            </p>
+          )}
+
+          <TicketTable
+            tickets={tickets}
+            loading={loadingTickets}
+            updatingTicketId={updatingTicketId}
+            onUpdate={handleTicketUpdate}
+          />
 
           <Pagination
             page={page}
