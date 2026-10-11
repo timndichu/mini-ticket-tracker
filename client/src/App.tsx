@@ -1,16 +1,9 @@
-
 import { useEffect, useState } from "react";
-import {
-  getTickets,
-  getTicketStats,
-} from "./services/ticketApi";
-import type {
-  Ticket,
-  TicketStats,
-  TicketStatus,
-} from "./types/ticket";
-import "./App.css";
+import { getTickets, getTicketStats } from "./services/ticketApi";
+import type { Ticket, TicketStats, TicketStatus } from "./types/ticket";
 import TicketStatsSection from "./components/dashboard/TicketStatsSection";
+import StatusBadge from "./components/ui/StatusBadge";
+import PriorityBadge from "./components/ui/PriorityBadge";
 
 type StatusFilter = "all" | TicketStatus;
 
@@ -22,27 +15,47 @@ const statusLabels: Record<TicketStatus, string> = {
   closed: "Closed",
 };
 
-function formatDate(date: string) {
+const statusStyles: Record<TicketStatus, string> = {
+  open: "bg-amber-50 text-amber-700 ring-amber-600/20",
+  in_progress: "bg-violet-50 text-violet-700 ring-violet-600/20",
+  closed: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+};
+
+const priorityStyles = {
+  low: "text-emerald-700",
+  medium: "text-amber-700",
+  high: "text-red-700",
+};
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(date));
+  }).format(date);
 }
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [stats, setStats] = useState<TicketStats | null>(null);
 
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalTickets, setTotalTickets] = useState(0);
 
   const [loadingTickets, setLoadingTickets] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
+
   const [ticketsError, setTicketsError] = useState("");
   const [statsError, setStatsError] = useState("");
+
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,9 +80,7 @@ function App() {
         if (cancelled) return;
 
         setTicketsError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load tickets."
+          error instanceof Error ? error.message : "Unable to load tickets.",
         );
       } finally {
         if (!cancelled) setLoadingTickets(false);
@@ -81,7 +92,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [statusFilter, page]);
+  }, [statusFilter, page, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +111,7 @@ function App() {
         setStatsError(
           error instanceof Error
             ? error.message
-            : "Unable to load ticket statistics."
+            : "Unable to load ticket statistics.",
         );
       } finally {
         if (!cancelled) setLoadingStats(false);
@@ -112,70 +123,126 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
 
-  function handleStatusFilterChange(value: StatusFilter) {
+  function refreshDashboard() {
+    setRefreshKey((current) => current + 1);
+  }
+
+  function handleFilterChange(value: StatusFilter) {
     setStatusFilter(value);
     setPage(1);
   }
 
-  function refreshDashboard() {
-    // Reloading the page is not necessary; changing a state value
-    // would be another option. We'll add a dedicated refresh trigger
-    // when we wire in ticket creation and updates.
-    window.location.reload();
-  }
+  const statCards = [
+    {
+      label: "All tickets",
+      value: stats ? stats.open + stats.in_progress + stats.closed : "—",
+      description: "Across all statuses",
+      icon: "▤",
+      iconStyle: "bg-blue-50 text-blue-700",
+    },
+    {
+      label: "Open",
+      value: stats?.open ?? "—",
+      description: "Waiting to be handled",
+      icon: "○",
+      iconStyle: "bg-amber-50 text-amber-700",
+    },
+    {
+      label: "In progress",
+      value: stats?.in_progress ?? "—",
+      description: "Currently being worked on",
+      icon: "◷",
+      iconStyle: "bg-violet-50 text-violet-700",
+    },
+    {
+      label: "Closed",
+      value: stats?.closed ?? "—",
+      description: "Successfully resolved",
+      icon: "✓",
+      iconStyle: "bg-emerald-50 text-emerald-700",
+    },
+  ];
 
   return (
-    <main className="dashboard">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="TicketDesk home">
-          <span className="brand-mark">T</span>
-          <span>TicketDesk</span>
-        </a>
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <a href="/" className="flex items-center gap-3">
+            <span className="grid size-9 place-items-center rounded-xl bg-blue-800 text-lg font-bold text-white">
+              T
+            </span>
+            <span className="text-lg font-bold tracking-tight text-slate-900">
+              TicketDesk
+            </span>
+          </a>
 
-        <div className="topbar-right">
-          <span className="environment-label">
-            <span className="environment-dot" />
-            Support workspace
-          </span>
-          <div className="avatar" aria-label="User">T</div>
+          <div className="flex items-center gap-3">
+            <span className="hidden items-center gap-2 text-sm text-slate-500 sm:flex">
+              <span className="size-2 rounded-full bg-emerald-500" />
+              Support workspace
+            </span>
+            <span className="grid size-9 place-items-center rounded-full bg-blue-100 text-sm font-semibold text-blue-800">
+              T
+            </span>
+          </div>
         </div>
       </header>
 
-      <section className="page-content">
-        <div className="page-heading">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="eyebrow">WORKSPACE / TICKETS</p>
-            <h1>Ticket overview</h1>
-            <p className="page-description">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Workspace / Tickets
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Ticket overview
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
               Track, prioritize, and manage support requests.
             </p>
           </div>
 
           <button
-            className="button button-secondary"
             type="button"
             onClick={refreshDashboard}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
-            <span aria-hidden="true">↻</span>
+            <span aria-hidden="true" className="text-lg">
+              ↻
+            </span>
             Refresh
           </button>
+        </section>
+
+        <div className="mb-8">
+          <TicketStatsSection stats={stats} loading={loadingStats} />
         </div>
 
-        <TicketStatsSection stats={stats} loading={loadingStats} />
-
         {statsError && (
-          <div className="alert alert-error" role="alert">
-            Statistics could not be loaded: {statsError}
+          <div
+            role="alert"
+            className="mb-5 flex flex-col gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span>Unable to load statistics: {statsError}</span>
+            <button
+              type="button"
+              onClick={refreshDashboard}
+              className="font-semibold underline"
+            >
+              Retry
+            </button>
           </div>
         )}
 
-        <section className="tickets-panel">
-          <div className="panel-heading">
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
-              <h2>Support tickets</h2>
-              <p className="panel-description">
+              <h2 className="text-lg font-bold text-slate-900">
+                Support tickets
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
                 {totalTickets} {totalTickets === 1 ? "ticket" : "tickets"}
                 {statusFilter !== "all"
                   ? ` · ${statusLabels[statusFilter]}`
@@ -183,15 +250,14 @@ function App() {
               </p>
             </div>
 
-            <label className="filter-control">
+            <label className="flex items-center gap-3 text-sm font-medium text-slate-600">
               <span>Status</span>
               <select
                 value={statusFilter}
                 onChange={(event) =>
-                  handleStatusFilterChange(
-                    event.target.value as StatusFilter
-                  )
+                  handleFilterChange(event.target.value as StatusFilter)
                 }
+                className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="all">All statuses</option>
                 <option value="open">Open</option>
@@ -202,85 +268,102 @@ function App() {
           </div>
 
           {ticketsError && (
-            <div className="alert alert-error" role="alert">
-              <p>{ticketsError}</p>
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-4 border-b border-red-200 bg-red-50 p-4 text-sm text-red-800"
+            >
+              <span>{ticketsError}</span>
               <button
-                className="text-button"
-                onClick={() => setPage((current) => current)}
                 type="button"
+                onClick={refreshDashboard}
+                className="shrink-0 font-semibold underline"
               >
-                Try again
+                Retry
               </button>
             </div>
           )}
 
-          <div className="table-wrapper">
-            <table className="tickets-table">
-              <thead>
-                <tr>
-                  <th>Ticket</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                  <th>Created</th>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-190 text-left">
+              <thead className="bg-slate-50">
+                <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th scope="col" className="px-6 py-4">
+                    Ticket
+                  </th>
+                  <th scope="col" className="px-6 py-4">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-4">
+                    Priority
+                  </th>
+                  <th scope="col" className="px-6 py-4">
+                    Created
+                  </th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {loadingTickets ? (
                   <tr>
-                    <td className="table-message" colSpan={4}>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-16 text-center text-sm text-slate-500"
+                    >
                       Loading tickets...
                     </td>
                   </tr>
                 ) : ticketsError ? (
                   <tr>
-                    <td className="table-message" colSpan={4}>
-                      Unable to display tickets.
+                    <td
+                      colSpan={4}
+                      className="px-6 py-16 text-center text-sm text-slate-500"
+                    >
+                      Tickets could not be displayed.
                     </td>
                   </tr>
                 ) : tickets.length === 0 ? (
                   <tr>
-                    <td className="table-message" colSpan={4}>
-                      <div className="empty-state">
-                        <span className="empty-icon">▤</span>
-                        <strong>No tickets found</strong>
-                        <span>
-                          Try another status filter or create a ticket.
+                    <td colSpan={4} className="px-6 py-16 text-center">
+                      <div className="mx-auto flex max-w-sm flex-col items-center">
+                        <span className="mb-3 grid size-12 place-items-center rounded-xl bg-slate-100 text-xl text-slate-500">
+                          ▤
                         </span>
+                        <p className="font-semibold text-slate-800">
+                          No tickets found
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Try another status filter or create a ticket.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  tickets.map((ticket) => (
-                    <tr key={ticket.id}>
-                      <td>
-                        <div className="ticket-title">
+                  tickets.map((ticket: Ticket) => (
+                    <tr
+                      key={ticket.id}
+                      className="transition hover:bg-slate-50/80"
+                    >
+                      <td className="max-w-md px-6 py-5">
+                        <p className="break-word text-sm font-semibold text-slate-800">
                           {ticket.title}
-                        </div>
-                        <div className="ticket-description">
+                        </p>
+                        <p className="mt-1 break-word text-xs leading-5 text-slate-500">
                           {ticket.description || "No description provided"}
-                        </div>
-                        <span className="ticket-id">
+                        </p>
+                        <p className="mt-2 text-xs font-medium text-slate-400">
                           TKT-{ticket.id}
-                        </span>
+                        </p>
                       </td>
 
-                      <td>
-                        <span className={`status-badge status-${ticket.status}`}>
-                          <span className="status-dot" />
-                          {statusLabels[ticket.status]}
-                        </span>
+                      <td className="px-6 py-5">
+                       <StatusBadge status={ticket.status} />
                       </td>
 
-                      <td>
-                        <span className={`priority priority-${ticket.priority}`}>
-                          <span className="priority-dot" />
-                          {ticket.priority.charAt(0).toUpperCase() +
-                            ticket.priority.slice(1)}
-                        </span>
+                      <td className="px-6 py-5">
+                       <PriorityBadge priority={ticket.priority} />
                       </td>
 
-                      <td className="date-cell">
+                      <td className="whitespace-nowrap px-6 py-5 text-sm text-slate-500">
                         {formatDate(ticket.createdAt)}
                       </td>
                     </tr>
@@ -290,29 +373,27 @@ function App() {
             </table>
           </div>
 
-          <footer className="pagination">
-            <span className="pagination-info">
+          <footer className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="text-sm text-slate-500">
               Page {page} of {Math.max(totalPages, 1)}
-            </span>
+            </p>
 
-            <div className="pagination-actions">
+            <div className="flex gap-2">
               <button
-                className="button button-secondary"
                 type="button"
                 disabled={page <= 1 || loadingTickets}
                 onClick={() => setPage((current) => current - 1)}
+                className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
               <button
-                className="button button-secondary"
                 type="button"
                 disabled={
-                  loadingTickets ||
-                  totalPages === 0 ||
-                  page >= totalPages
+                  loadingTickets || totalPages === 0 || page >= totalPages
                 }
                 onClick={() => setPage((current) => current + 1)}
+                className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>
@@ -320,40 +401,11 @@ function App() {
           </footer>
         </section>
 
-        <p className="page-footer">
-          TicketDesk · Mini Ticket Tracker
-        </p>
-      </section>
-    </main>
-  );
-}
-
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  detail: string;
-  icon: string;
-  tone: "blue" | "orange" | "purple" | "green";
-}
-
-function StatCard({
-  label,
-  value,
-  detail,
-  icon,
-  tone,
-}: StatCardProps) {
-  return (
-    <article className="stat-card">
-      <div className="stat-card-top">
-        <span className="stat-label">{label}</span>
-        <span className={`stat-icon stat-icon-${tone}`} aria-hidden="true">
-          {icon}
-        </span>
-      </div>
-      <div className="stat-value">{value}</div>
-      <p className="stat-detail">{detail}</p>
-    </article>
+        <footer className="py-6 text-center text-xs text-slate-400">
+          Mini Ticket Tracker · Support workspace
+        </footer>
+      </main>
+    </div>
   );
 }
 

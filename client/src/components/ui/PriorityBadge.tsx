@@ -13,9 +13,10 @@ const priorityStyles: Record<TicketPriority, string> = {
 function PriorityBadge({ priority }: PriorityBadgeProps) {
   return (
     <span
-      className={`text-sm font-semibold capitalize ${priorityStyles[priority]}`}
+      className={`inline-flex items-center gap-2 text-sm font-semibold ${priorityStyles[priority]}`}
     >
-      {priority}
+      <span className="size-2 rounded-full bg-current" />
+      {priority.charAt(0).toUpperCase() + priority.slice(1)}
     </span>
   );
 }
