@@ -1,7 +1,7 @@
 import {
   pgTable,
   pgEnum,
-  serial,
+  integer,
   varchar,
   text,
   timestamp,
@@ -25,7 +25,7 @@ export const tickets = pgTable(
   "tickets",
   {
     //define a PostgreSQL auto-incrementing id column as the primary key for the tickets table
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 
     title: varchar("title", { length: 200 }).notNull(),
 
