@@ -1,4 +1,3 @@
-
 import type {
   CreateTicketInput,
   Ticket,
@@ -14,16 +13,24 @@ const API_BASE_URL = (
 
 async function apiRequest<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...options.headers,
-    },
-  });
+  let response: Response;
 
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error(
+      "Unable to connect to the server. Please check that the server is running and try again.",
+    );
+  }
+  
   if (!response.ok) {
     const body = await response.json().catch(() => null);
 
@@ -43,7 +50,7 @@ export interface ListTicketsParams {
 }
 
 export async function getTickets(
-  params: ListTicketsParams = {}
+  params: ListTicketsParams = {},
 ): Promise<TicketListResponse> {
   const query = new URLSearchParams();
 
@@ -54,13 +61,11 @@ export async function getTickets(
   const queryString = query.toString();
 
   return apiRequest<TicketListResponse>(
-    `/tickets${queryString ? `?${queryString}` : ""}`
+    `/tickets${queryString ? `?${queryString}` : ""}`,
   );
 }
 
-export async function createTicket(
-  input: CreateTicketInput
-): Promise<Ticket> {
+export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
   return apiRequest<Ticket>("/tickets", {
     method: "POST",
     body: JSON.stringify(input),
@@ -69,7 +74,7 @@ export async function createTicket(
 
 export async function updateTicket(
   id: number,
-  input: UpdateTicketInput
+  input: UpdateTicketInput,
 ): Promise<Ticket> {
   return apiRequest<Ticket>(`/tickets/${id}`, {
     method: "PATCH",
