@@ -18,6 +18,18 @@ export const createTicketSchema = z
   })
   .strict();
 
+
+export const listTicketsQuerySchema = z.object({
+  status: z.enum(["open", "in_progress", "closed"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+});
+
+export type ListTicketsQuery = z.infer<
+  typeof listTicketsQuerySchema
+>;
+
+
 export type CreateTicketInput = z.infer<
   typeof createTicketSchema
 >;
