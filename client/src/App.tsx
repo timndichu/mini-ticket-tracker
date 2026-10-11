@@ -7,6 +7,7 @@ import PriorityBadge from "./components/ui/PriorityBadge";
 import TicketTable from "./components/dashboard/TicketTable";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import TicketFilters from "./components/dashboard/TicketFilters";
+import Pagination from "./components/dashboard/Pagination";
 
 type StatusFilter = "all" | TicketStatus;
 
@@ -256,32 +257,12 @@ function App() {
 
           <TicketTable tickets={tickets} loading={loadingTickets} />
 
-          <footer className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-sm text-slate-500">
-              Page {page} of {Math.max(totalPages, 1)}
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={page <= 1 || loadingTickets}
-                onClick={() => setPage((current) => current - 1)}
-                className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={
-                  loadingTickets || totalPages === 0 || page >= totalPages
-                }
-                onClick={() => setPage((current) => current + 1)}
-                className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </footer>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            loading={loadingTickets}
+            onPageChange={setPage}
+          />
         </section>
 
         <footer className="py-6 text-center text-xs text-slate-400">
