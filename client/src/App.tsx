@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { getTickets, getTicketStats } from "./services/ticketApi";
 import type { Ticket, TicketStats, TicketStatus } from "./types/ticket";
 import TicketStatsSection from "./components/dashboard/TicketStatsSection";
-import StatusBadge from "./components/ui/StatusBadge";
-import PriorityBadge from "./components/ui/PriorityBadge";
 import TicketTable from "./components/dashboard/TicketTable";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
 import TicketFilters from "./components/dashboard/TicketFilters";
@@ -19,30 +17,6 @@ const statusLabels: Record<TicketStatus, string> = {
   closed: "Closed",
 };
 
-const statusStyles: Record<TicketStatus, string> = {
-  open: "bg-amber-50 text-amber-700 ring-amber-600/20",
-  in_progress: "bg-violet-50 text-violet-700 ring-violet-600/20",
-  closed: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-};
-
-const priorityStyles = {
-  low: "text-emerald-700",
-  medium: "text-amber-700",
-  high: "text-red-700",
-};
-
-function formatDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 function App() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -137,37 +111,6 @@ function App() {
     setStatusFilter(value);
     setPage(1);
   }
-
-  const statCards = [
-    {
-      label: "All tickets",
-      value: stats ? stats.open + stats.in_progress + stats.closed : "—",
-      description: "Across all statuses",
-      icon: "▤",
-      iconStyle: "bg-blue-50 text-blue-700",
-    },
-    {
-      label: "Open",
-      value: stats?.open ?? "—",
-      description: "Waiting to be handled",
-      icon: "○",
-      iconStyle: "bg-amber-50 text-amber-700",
-    },
-    {
-      label: "In progress",
-      value: stats?.in_progress ?? "—",
-      description: "Currently being worked on",
-      icon: "◷",
-      iconStyle: "bg-violet-50 text-violet-700",
-    },
-    {
-      label: "Closed",
-      value: stats?.closed ?? "—",
-      description: "Successfully resolved",
-      icon: "✓",
-      iconStyle: "bg-emerald-50 text-emerald-700",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
