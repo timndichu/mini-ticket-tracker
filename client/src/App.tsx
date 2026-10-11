@@ -6,6 +6,7 @@ import StatusBadge from "./components/ui/StatusBadge";
 import PriorityBadge from "./components/ui/PriorityBadge";
 import TicketTable from "./components/dashboard/TicketTable";
 import DashboardHeader from "./components/dashboard/DashboardHeader";
+import TicketFilters from "./components/dashboard/TicketFilters";
 
 type StatusFilter = "all" | TicketStatus;
 
@@ -231,21 +232,10 @@ function App() {
               </p>
             </div>
 
-            <label className="flex items-center gap-3 text-sm font-medium text-slate-600">
-              <span>Status</span>
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  handleFilterChange(event.target.value as StatusFilter)
-                }
-                className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              >
-                <option value="all">All statuses</option>
-                <option value="open">Open</option>
-                <option value="in_progress">In progress</option>
-                <option value="closed">Closed</option>
-              </select>
-            </label>
+            <TicketFilters
+              statusFilter={statusFilter}
+              onStatusChange={handleFilterChange}
+            />
           </div>
 
           {ticketsError && (
