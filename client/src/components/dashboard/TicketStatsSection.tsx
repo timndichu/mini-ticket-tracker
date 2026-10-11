@@ -6,7 +6,7 @@ interface TicketStatsProps {
   loading: boolean;
 }
 
-function TicketStats({ stats, loading }: TicketStatsProps) {
+function TicketStatsSection({ stats, loading }: TicketStatsProps) {
   const cards = [
     {
       label: "All tickets",
@@ -76,4 +76,4 @@ function TicketStats({ stats, loading }: TicketStatsProps) {
   );
 }
 
-export default TicketStats;
+export default TicketStatsSection;
