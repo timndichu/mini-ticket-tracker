@@ -26,7 +26,7 @@ export async function listTickets(filters: ListTicketsQuery) {
 
   //allows us to build the query conditionally
   const ticketQuery = db.select().from(tickets).$dynamic();
-  
+
   const countQuery = db
     .select({ total: count() })
     .from(tickets)
@@ -58,4 +58,34 @@ export async function listTickets(filters: ListTicketsQuery) {
       totalPages: Math.ceil(total / filters.limit),
     },
   };
+}
+
+
+// Function to get ticket statistics
+export async function getTicketStats() {
+  /*equivalent of:
+  SELECT status, COUNT(*) AS total
+  FROM tickets
+  GROUP BY status;
+*/
+
+  const rows = await db
+    .select({
+      status: tickets.status,
+      total: count(),
+    })
+    .from(tickets)
+    .groupBy(tickets.status);
+
+  const stats = {
+    open: 0,
+    in_progress: 0,
+    closed: 0,
+  };
+
+  for (const row of rows) {
+    stats[row.status] = row.total;
+  }
+
+  return stats;
 }
