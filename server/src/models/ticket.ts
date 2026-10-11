@@ -1,14 +1,6 @@
-export type TicketStatus = "open" | "in_progress" | "closed";
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { tickets } from "../db/schema.js";
 
-export type TicketPriority = "low" | "medium" | "high";
+export type Ticket = InferSelectModel<typeof tickets>;
 
-export interface Ticket {
-
-  //id is a string because PostgreSQL's BIGINT values are returned as strings by default by the pg driver.  
-  id: string; 
-  title: string;
-  description: string | null;
-  status: TicketStatus;
-  priority: TicketPriority;
-  created_at: Date;
-}
+export type NewTicket = InferInsertModel<typeof tickets>;
