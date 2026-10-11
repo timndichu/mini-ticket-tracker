@@ -368,3 +368,42 @@ test("PATCH /tickets/:id rejects unsupported fields", async () => {
   assert.equal(response.status, 400);
   assert.equal(response.body.error, "Validation failed");
 });
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////
+// ERROR HANDLING AND HEALTH ENDPOINT TESTS
+
+test("GET /health returns 200 and a healthy status", async () => {
+  const response = await request(app).get("/health");
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, { status: "ok" });
+});
+
+test("GET unknown endpoint returns a JSON 404 response", async () => {
+  const response = await request(app).get("/does-not-exist");
+
+  assert.equal(response.status, 404);
+  assert.equal(response.body.error, "Not found");
+  assert.equal(
+    response.body.message,
+    "The requested endpoint was not found."
+  );
+});
+
+test("POST /tickets rejects malformed JSON", async () => {
+  const response = await request(app)
+    .post("/tickets")
+    .set("Content-Type", "application/json")
+    .send('{"title":');
+
+  assert.equal(response.status, 400);
+  assert.equal(response.body.error, "Invalid JSON");
+  assert.equal(
+    response.body.message,
+    "The request body contains malformed JSON."
+  );
+});
